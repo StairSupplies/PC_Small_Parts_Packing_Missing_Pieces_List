@@ -61,6 +61,7 @@ def getAllSmallParts(orderNumber):
                 packableItems {{
                 getProduct{{
                     id
+                    name
                 }}
                 quantity
                 quantity_packed
@@ -106,20 +107,84 @@ def getAllSmallParts(orderNumber):
         # except:
         #     statusListJSON = {}
         
-        print(statusList)
-        output = ""
         resultsDF = pd.read_json(json.dumps(statusList[:]))
-        print(resultsDF)
+        
         resultsDF = resultsDF[resultsDF.itemType == "SMALL_PARTS"].reset_index()
-        print(resultsDF)
+        
         resultsDF = resultsDF[resultsDF.quantity != resultsDF.quantity_packed].reset_index()
         
-
-        resultsDF["product_id"] = resultsDF["getProduct"].apply(pd.Series)
-        resultsDF = resultsDF.drop(["getProduct", "index", "level_0"], axis=1)
-        
-        resultsDF["missing_quantity"] = resultsDF["quantity"] - resultsDF["quantity_packed"]
         print(resultsDF)
+        
+        if len(resultsDF != 0):
+            resultsDF[["product_id", "product_name"]] = resultsDF["getProduct"].apply(pd.Series)
+            resultsDF = resultsDF.drop(["getProduct", "index", "level_0"], axis=1)
+            print(resultsDF)
+            resultsDF["missing_quantity"] = resultsDF["quantity"] - resultsDF["quantity_packed"]
+            
+            resultsDF = resultsDF.sort_values("product_id", ascending=True).reset_index()
+
+            aggregation_functions = {'missing_quantity': 'sum', "product_name":'first'}
+            resultsDF = resultsDF.groupby(["product_id","lineItemFinishes"], as_index=False).aggregate(aggregation_functions)
+            
+            PC_COLOR = {
+
+                'PC - Black':'Black',
+                'Platinum Black':'P-Black',
+                'PC: Black':'Black',
+                'PC Fluoropolymer: Antique Bronze':'F-Antique Br',
+                'PC Fluoropolymer: Apollo White':'F-Apollo White',
+                'PPG Fluoropolymer: Apollo White':'F-Apollo White',
+                'PC Fluoropolymer: Black':'F-Black',
+                'PC Fluoropolymer: Bone White':'F-Bone White',
+                'PC Fluoropolymer: Colonial Grey':'F-Colo Grey',
+                'PC Fluoropolymer: Fashion Grey':'F-Fash Grey',
+                'PC Fluoropolymer: Platinum Matte':'F-Plat Matt',
+                'PC Fluoropolymer: Silver Spark':'F-Silver Sprk',
+                'PC Fluoropolymer: Speedboat Silver':'F-SBS',
+                'PC: Apollo White':'Apollo White',
+                'PC: Bone White':'Bone White',
+                'PC: Bronze Akzonobel GM2007':'Bronze Akz',
+                'PC: Brushed Aluminum w/ Clear - SRSF-90299':'Brsh-Al-Clear',
+                'PC: Brushed w/ Clear':'Brsh w/ Clear',
+                'PC: Charcoal':'Charcoal',
+                'PC: Clear Finish':'Clear Finish',
+                'PC: Colonial Grey':'Colonial Grey',
+                'PC: Copper Vein':'Copper Vein',
+                'PC: Fashion Grey':'Fashion Grey',
+                'PC: Hunter Green':'Hunter Green',
+                'PC: Light Blue':'Light Blue',
+                'PC: Lithonia Bronze':'Lith Bronze',
+                'PC: Mineral Bronze':'Mineral Bronze',
+                'PC: Rust Spice':'Rust Spice',
+                'PC: Sandstone':'Sandstone',
+                'PC: Seawolf':'Seawolf',
+                'PC: Speedboat Silver':'Speedboat Silv',
+                'PC: Super C-33 Bronze':'C-33 Brnze',
+                'PC: Super Bronze':'Super Bronze',
+                'PC: Tube Brown':'Tube Brown',
+                'PC: Legacy Speedboat Silver':'Legacy SBS',
+                'PC: Legacy Copper Vein':'Legacy Copp Vein',
+                'Brushed Stainless':'Brushed Stainless',
+                'Platinum Apollo White':'P-Apollo White',
+                'Platinum Bronze':'P-Bronze',
+                'PC - Black For Glass Hardware': 'Black Glass',
+                'N/A':'N/A',
+                'None': 'None'
+
+            }
+
+            for index, row in resultsDF.iterrows():
+                finish = resultsDF.at[index, "lineItemFinishes"]
+                print(finish)
+                shortFinish = PC_COLOR[finish]
+                print(shortFinish)
+
+                resultsDF.at[index, "lineItemFinishes"] = shortFinish
+
+            
+            print(resultsDF)
+            return resultsDF
+        
         return resultsDF
         
     else:

@@ -3,7 +3,7 @@ venv\Scripts\activate
 
 pip3 install -r requirements.txt
 
-$env:FLASK_DEBUG="1" 
-$env:FLASK_ENV="development" 
-$env:FLASK_APP="app/routes.py" 
+# $env:FLASK_DEBUG="0" 
+# $env:FLASK_ENV="production" 
+# $env:FLASK_APP="app/routes.py" 
 flask run
